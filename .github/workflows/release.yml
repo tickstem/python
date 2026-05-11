@@ -1,8 +1,8 @@
 name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
 
 jobs:
   test:
@@ -15,20 +15,32 @@ jobs:
       - run: uv sync --dev
       - run: uv run pytest --cov=tickstem --cov-report=term-missing --cov-fail-under=85
 
-  publish:
+  release:
     needs: test
     runs-on: ubuntu-latest
-    environment: pypi
     permissions:
+      contents: write
       id-token: write
+    environment: pypi
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+        with:
+          fetch-depth: 0
+
+      - uses: go-semantic-release/action@v1
+        id: semrel
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - if: steps.semrel.outputs.version != ''
+        uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-      - name: Set version from release tag
+
+      - if: steps.semrel.outputs.version != ''
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
-          sed -i "s/__version__ = \".*\"/__version__ = \"${VERSION}\"/" tickstem/_version.py
-      - run: uv build
-      - uses: pypa/gh-action-pypi-publish@release/v1
+          sed -i "s/__version__ = \".*\"/__version__ = \"${{ steps.semrel.outputs.version }}\"/" tickstem/_version.py
+          uv build
+
+      - if: steps.semrel.outputs.version != ''
+        uses: pypa/gh-action-pypi-publish@release/v1
