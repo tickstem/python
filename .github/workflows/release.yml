@@ -1,9 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 jobs:
   test:
@@ -27,7 +26,7 @@ jobs:
       - uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-      - name: Set version from tag
+      - name: Set version from release tag
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           sed -i "s/__version__ = \".*\"/__version__ = \"${VERSION}\"/" tickstem/_version.py
