@@ -1,3 +1,5 @@
+from typing import Self
+
 import httpx
 
 from ._version import __version__
@@ -62,7 +64,7 @@ class TickstemClient:
     def close(self) -> None:
         self._http.close()
 
-    def __enter__(self) -> TickstemClient:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_: object) -> None:
